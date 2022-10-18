@@ -2,7 +2,6 @@
 // MACROS AND ENUMS
 // =========================
 #macro BLOCKSIZE		32
-#macro HALFSIZE			16
 enum dir {
 	up,
 	right,
@@ -10,6 +9,14 @@ enum dir {
 	left
 }
 
+// =========================
+// SETUP GRID
+// =========================
+// Setup basic grid
+block_grid_wid	= 8;
+block_grid_hig	= 8;
+block_grid		= ds_grid_create(block_grid_wid,block_grid_hig);
+frontier_list	= ds_list_create();
 
 // =========================
 // HELPER FUNCTIONS
@@ -58,7 +65,6 @@ function adjust_frontier_list(vec,index) {
 
 // This adds the input cell to the frontier if it is not already in the frontier
 function add_to_frontier(vec) {
-	var in_frontier_already = false;
 	var i = 0;
 	// look for cell in frontier list
 	repeat(ds_list_size(frontier_list)) {
@@ -86,43 +92,31 @@ function get_opposite_dir(_dir) {
 // This gets a cell in the of the cardinal directions
 function get_adjacent_cell_coords(vec,_dir) {
 	// GET CELL IN DIRECTION
-	var adjacent = new vec2();
-	if (_dir == dir.up)			{ adjacent.set(0,-1); }
-	else if (_dir == dir.right) { adjacent.set(1,0); }
-	else if (_dir == dir.down)	{ adjacent.set(0,1); }
-	else if (_dir == dir.left)	{ adjacent.set(-1,0); }
-	return vec.add(adjacent);
+	if (_dir == dir.up)			return vec.add(new vec2(0,-1));
+	else if (_dir == dir.right) return vec.add(new vec2(1,0));
+	else if (_dir == dir.down)	return vec.add(new vec2(0,1));
+	else if (_dir == dir.left)	return vec.add(new vec2(-1,0));
 }
 #endregion
 
 
 // =========================
-// SETUP GRID
-// =========================
-// Setup basic grid
-block_grid_wid	= 8;
-block_grid_hig	= 8;
-block_grid		= ds_grid_create(block_grid_wid,block_grid_hig);
-frontier_list	= ds_list_create();
-empty_grid();
-
-
-// =========================
 // PLOT THE MAZE
 // =========================
+// Empty out the grid to unvisited cells with four walls
+empty_grid();
+
+// This is the first cell, so pick it at 
+// random and add it to the frontier
+cur_cell	= new vec2(irandom(block_grid_wid-1),irandom(block_grid_hig-1));
+block_grid[# cur_cell.x,cur_cell.y].visited = true;
+add_to_frontier(cur_cell);
+adjust_frontier_list(cur_cell,0);
+
 // Plot the maze until we run out of frontier cells (i.e. the grid is full)
 do {
-	// if the frontier list is empty, this is the first cell, so pick it at 
-	// random and add it to the frontier, then loop as normal
-	if (ds_list_size(frontier_list) == 0) {
-		cur_cell	= new vec2(irandom(block_grid_wid-1),irandom(block_grid_hig-1));
-		block_grid[# cur_cell.x,cur_cell.y].visited = true;
-		add_to_frontier(cur_cell);
-		adjust_frontier_list(cur_cell,0);
-	}
-	
 	// get a random cell in the frontier and visit it
-	var index	= ds_list_size(frontier_list)-1;
+	var index	= irandom(ds_list_size(frontier_list)-1);
 	cur_cell	= frontier_list[| index];
 	block_grid[# cur_cell.x,cur_cell.y].visited = true;
 	
